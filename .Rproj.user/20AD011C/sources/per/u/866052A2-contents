@@ -1,0 +1,16 @@
+input_file <- "./CHUM_Data/cohort_avantPro.csv"
+updated_path <- "./CHUM_Data/updated_episodes_carry_forward_DonneComplication_v3.csv"
+
+Create_data(input_file)
+chronic_pathologies(input_file)
+frailty_results <- Frailty_Calculation(updated_path)
+
+fr_grouped <- frailty_results$fr_grouped
+fr_grouped_como <- frailty_results$fr_grouped_como
+
+
+# Capture results and convert to data frames
+comorbidity_results <- Comorbidity_Frailty_Calculation(updated_path, fr_grouped, fr_grouped_como)#updated_episodes_V2.csv
+comorbidity_results <- lapply(comorbidity_results, function(x) {
+  if (!is.data.frame(x)) as.data.frame(x) else x
+})
