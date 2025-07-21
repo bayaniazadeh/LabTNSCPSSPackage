@@ -31,10 +31,10 @@ The pipeline performs the following steps:
 
 - The input dataset should be a CSV file with episode-level patient data.
 - Required columns (default mapping):  
-  - `trajectoire_id` — patient ID  
-  - `diagnostic_code` — ICD coding system diagnosis codes  
-  - `date_debut` — episode start date  
-  - `date_fin` — episode end date  
+  - `Patient_id` — patient ID  
+  - `ICD` — ICD coding system diagnosis codes  
+  - `start_date` — episode start date  
+  - `end_date` — episode end date  
   - `episode_id` — unique episode identifier  
 
 You can customize these column names by modifying the `col_mapping` list in the pipeline.
