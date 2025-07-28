@@ -1,4 +1,0 @@
-load("/Users/azadehbayani/Documents/Azadé/LabTNS/Projects/CharlsonCodes/ModifiedVersion_Feb2025/comorbidity-master/data/icd10_2011.rda")
-load("/Users/azadehbayani/Documents/Azadé/LabTNS/Projects/CharlsonCodes/ModifiedVersion_Feb2025/comorbidity-master/data/icd10cm_2017.rda")
-load("/Users/azadehbayani/Documents/Azadé/LabTNS/Projects/CharlsonCodes/ModifiedVersion_Feb2025/LabTNSCPSSPackage/data/Frailty_mapping.rda")
-load("/Users/azadehbayani/Documents/Azadé/LabTNS/Projects/CharlsonCodes/ModifiedVersion_Feb2025/LastVersion_April_2025/LabTNSCPSSPackage/data/Frailty_ICD11.rda")
