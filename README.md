@@ -49,7 +49,7 @@ You can customize these column names by modifying the `col_mapping` list in the 
 source("./LABTNSCPSS_Code/setup_package.R")      # Load/install packages
 source("./LABTNSCPSS_Code/source_scripts.R")     # Load pipeline functions
 
-input_file <- "./CHUM_Data/testpackage.csv"
+input_file <- "./LABTNSCPSS_Data/testpackage.csv"
 
 df_result <- run_pipeline(input_file)
 
