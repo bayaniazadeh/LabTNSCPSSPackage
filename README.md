@@ -46,8 +46,8 @@ You can customize these column names by modifying the `col_mapping` list in the 
 2. Run the pipeline from your R session:
 
 ```r
-source("./CHUM_Code/setup_package.R")      # Load/install packages
-source("./CHUM_Code/source_scripts.R")     # Load pipeline functions
+source("./LABTNSCPSS_Code/setup_package.R")      # Load/install packages
+source("./LABTNSCPSS_Code/source_scripts.R")     # Load pipeline functions
 
 input_file <- "./CHUM_Data/testpackage.csv"
 
