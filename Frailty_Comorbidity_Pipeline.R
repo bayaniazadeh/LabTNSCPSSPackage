@@ -1,20 +1,20 @@
 
-source("./CHUM_Code/setup_package.R")  # Load and install required packages
-source("./CHUM_Code/source_scripts.R")  # Source external scripts
+source("./LABTNSCPSS_Code/setup_package.R")  # Load and install required packages
+source("./LABTNSCPSS_Code/source_scripts.R")  # Source external scripts
 
 #source("./CHUM_Code/chronic_pathologies_v2.R")
 
 coding_system <- get_coding_system()
 
 
-invisible(sapply(list.files("CHUM_Code", pattern = "\\.R$", full.names = TRUE), source))
+invisible(sapply(list.files("LABTNSCPSS_Code", pattern = "\\.R$", full.names = TRUE), source))
 
 
 #input_file <- "./CHUM_Data/data_test1.csv", mimic_test2.csv
-input_file <- "./CHUM_Data/testpackage.csv"
+input_file <- "./LABTNSCPSS_Data/testpackage.csv"
 input_basename <- tools::file_path_sans_ext(basename(input_file))
-cleaned_path <- paste0("CHUM_Data/input_data_cleaned_", input_basename, ".csv")
-updated_path <- paste0("CHUM_Data/updated_episodes_carry_forward_", input_basename, ".csv")
+cleaned_path <- paste0("LABTNSCPSS_Data/input_data_cleaned_", input_basename, ".csv")
+updated_path <- paste0("LABTNSCPSS_Data/updated_episodes_carry_forward_", input_basename, ".csv")
 
 ############## Provide your data column names and coding system ############
 #col_mapping <- list(patient_id = "nam",
