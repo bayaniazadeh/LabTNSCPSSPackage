@@ -26,8 +26,20 @@ The pipeline performs the following steps:
 ---
 
 ## Usage
+### Installation
 
-### Input data
+You can either **clone the repository** or **download the ZIP file**.
+
+```bash
+git clone https://github.com/bayaniazadeh/LabTNSCPSSPackage.git
+cd LabTNSCPSSPackage
+```
+
+## Running the pipeline
+
+### Running the pipeline
+
+1. Place your input CSV in `LABTNSCPSS_Data/`, e.g., `CHUM_Data/testpackage.csv`
 
 - The input dataset should be a CSV file with episode-level patient data.
 - Required columns (default mapping):  
@@ -39,17 +51,13 @@ The pipeline performs the following steps:
 
 You can customize these column names by modifying the `col_mapping` list in the pipeline.
 
-### Running the pipeline
-
-1. Place your input CSV in `CHUM_Data/`, e.g., `CHUM_Data/testpackage.csv`
-
 2. Run the pipeline from your R session:
 
 ```r
 source("./LABTNSCPSS_Code/setup_package.R")      # Load/install packages
 source("./LABTNSCPSS_Code/source_scripts.R")     # Load pipeline functions
 
-input_file <- "./LABTNSCPSS_Data/testpackage.csv"
-
-df_result <- run_pipeline(input_file)
+coding_system <- get_coding_system()
+```
+Here you should select the ICD vesion of according to your data: ICD-10-CA, ICD-10-CM, ICD-11
 

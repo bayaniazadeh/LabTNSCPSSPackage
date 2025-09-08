@@ -3,12 +3,12 @@ library(dplyr)
 library(lubridate)
 library(data.table)
 library(purrr)
-
+# file_path_main : 'CHUM_Data/updated_episodes_V2.csv'
 Frailty_Calculation <- function(file_path_main){
   # Read the updated episode data with chronic pathologies
 
 
-
+  #file_path_main <- "CHUM_Data/updated_episodes_V2.csv"
   # Read the updated episode data with chronic pathologies
   df <- fread(file_path_main, sep = ',', encoding = 'UTF-8')
 
@@ -169,7 +169,7 @@ Frailty_Calculation <- function(file_path_main){
     select(-all_of(cols_to_exclude))
 
   # Write the final data, could be used for verifications
-
+  #file_path <- "CHUM_Data/frailty_codes_V2.csv"
   #write.csv(frailty_pop2, file = file_path, row.names = FALSE) # or filtered_df
   file_path <- paste0("LABTNSCPSS_Data/Frailt_categories_", input_basename, ".csv")
   # Write to file
@@ -273,6 +273,7 @@ Frailty_Calculation <- function(file_path_main){
     select(patient_id, start_date, episode_id, all_of(unique_categories_FM)) %>%  # Select episode_id and columns in unique_categories
     mutate(morbi_frailty_score = rowSums(select(., all_of(unique_categories_FM)), na.rm = TRUE))  # Calculate frailty_score
 
+  #file_path <- "CHUM_Data/frailty_comorbidity_categories.csv"
 
   #write.csv(fr_grouped_como, file = file_path, row.names = FALSE) # or filtered_df
   file_path <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_categories_", input_basename, ".csv")

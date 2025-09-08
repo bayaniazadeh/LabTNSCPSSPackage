@@ -1,4 +1,5 @@
 
+
 Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_grouped_como){
   ### Step 1: Read Dataset from CSV file
   # Read the dataset that contains patient ICD codes and nam
@@ -75,7 +76,7 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
   # Write the final data
 
-  #file_path <- glue("CHUM_Data/Comorbidity_{mapping_Elix}.csv")
+
   file_path <- glue("LABTNSCPSS_Data/Comorbidity_{mapping_Elix}_{input_basename}.csv")
 
   file_path

@@ -1,5 +1,3 @@
-#' Create CHUM Data
-#'
 #' This script reads raw data from a CSV file, processes it by renaming columns based on a provided
 #' mapping, performs date transformations, cleans ICD codes, and saves the cleaned dataset to a new CSV file.
 #'
@@ -17,7 +15,7 @@
 #' @param col_mapping
 #'
 #' @examples
-#' source('./LABTNSCPSS_Code/create_CHUMData_v2.R')
+#' source('./LABTNSCPSS_Code/create_Data_v2.R')
 #'
 #' # Or you could call the read_csv function directly:
 #' df <- read_csv("./LABTNSCPSS_Data/data_test.csv", col_mapping)
