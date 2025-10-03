@@ -41,9 +41,10 @@ cd LabTNSCPSSPackage
 
 1. Place your input CSV in `LABTNSCPSS_Data/`, e.g., `LABTNSCPSS_Data/testpackage.csv`
 
-2. Go to your directory that the LabTNSCPSSPackage folder exists and open the file `LabTNSCPSSPackage.Rproj`
+2. Go to your directory that the LabTNSCPSSPackage folder exists and run the file `LabTNSCPSSPackage.Rproj`,
+then open `Frailty_Comorbidity_Pipeline.R` in your open R studio. 
 
-In the file edit these information: 
+In the `Frailty_Comorbidity_Pipeline.R` code edit these information: 
 - The input dataset should be a CSV file with episode-level patient data.
 - Required columns (default mapping):  
   - `Patient_id` — patient ID  
