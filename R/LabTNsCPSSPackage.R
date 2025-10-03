@@ -7,8 +7,8 @@
 #' @section Main Scripts:
 #' - \code{setup_package.R}: Installs and loads required dependencies.
 #' - \code{source_scripts.R}: Sources external scripts required for data processing.
-#' - \code{create_CHUMData_v2.R}: Cleans and prepares input data.
-#' - \code{Pathologie_chronic_CHUM_v2.R}: Updates episodes with chronic pathology information.
+#' - \code{create_Data.R}: Cleans and prepares input data.
+#' - \code{Pathologie_chronic.R}: Updates episodes with chronic pathology information.
 #' - \code{comorbidity_ICD10CA_v2.R}: Calculates comorbidity indices.
 #'
 #' @section Usage:

@@ -1,2 +1,18 @@
-data/.DS_Store
-.Rproj.user
+# macOS
+.DS_Store
+
+# RStudio
+.Rproj.user/
+.Rhistory
+.RData
+.RDataTmp
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Build artifacts
+.Rbuildignore
+*.tar.gz
+*.Rcheck/
+

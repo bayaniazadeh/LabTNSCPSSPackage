@@ -270,9 +270,16 @@ Frailty_Calculation <- function(file_path_main){
 
   # You can proceed with the rest of your operations as needed
   fr_grouped_como <- Frag_Co_final %>%
-    select(patient_id, start_date, episode_id, all_of(unique_categories_FM)) %>%  # Select episode_id and columns in unique_categories
-    mutate(morbi_frailty_score = rowSums(select(., all_of(unique_categories_FM)), na.rm = TRUE))  # Calculate frailty_score
-
+    select(patient_id, start_date, episode_id, all_of(unique_categories_FM)) %>%
+    mutate(
+      # keep Diab = 1; if both Diab & DiabNC are 1, set DiabNC = 0
+      DiabC   = coalesce(.data[["DiabC"]], 0L),
+      DiabNC = if_else(.data[["DiabC"]] == 1L & coalesce(.data[["DiabNC"]], 0L) == 1L,
+                       0L, coalesce(.data[["DiabNC"]], 0L))
+    ) %>%
+    mutate(
+      morbi_frailty_score = rowSums(dplyr::select(., all_of(unique_categories_FM)), na.rm = TRUE)
+    )
 
   #write.csv(fr_grouped_como, file = file_path, row.names = FALSE) # or filtered_df
   file_path <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_categories_", input_basename, ".csv")

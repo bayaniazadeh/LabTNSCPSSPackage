@@ -39,8 +39,11 @@ cd LabTNSCPSSPackage
 
 ### Running the pipeline
 
-1. Place your input CSV in `LABTNSCPSS_Data/`, e.g., `CHUM_Data/testpackage.csv`
+1. Place your input CSV in `LABTNSCPSS_Data/`, e.g., `LABTNSCPSS_Data/testpackage.csv`
 
+2. Go to your directory that the LabTNSCPSSPackage folder exists and open the file `LabTNSCPSSPackage.Rproj`
+
+In the file edit these information: 
 - The input dataset should be a CSV file with episode-level patient data.
 - Required columns (default mapping):  
   - `Patient_id` — patient ID  
@@ -51,7 +54,7 @@ cd LabTNSCPSSPackage
 
 You can customize these column names by modifying the `col_mapping` list in the pipeline.
 
-2. Run the pipeline from your R session:
+2. Run the pipeline from your R session line by line:
 
 ```r
 source("./LABTNSCPSS_Code/setup_package.R")      # Load/install packages
@@ -59,5 +62,17 @@ source("./LABTNSCPSS_Code/source_scripts.R")     # Load pipeline functions
 
 coding_system <- get_coding_system()
 ```
-Here you should select the ICD vesion of according to your data: ICD-10-CA, ICD-10-CM, ICD-11
+Here you should select the ICD vesion of according to your data: ICD-10-CA, ICD-10-CM, ICD-11, write it in the console part and press enter. 
 
+3. Run the rest of the code line by line. 
+
+4. Finally you can find the generated files at `LABTNSCPSS_Data/`
+
+## Important resources
+
+ In the folder `data/` you can find all the mapping files and categorizations in ".rda"" format. To be able to explore the mappings in your R studio browser use this code, and replace "file_name" with your desired data file : 
+ 
+```r
+df <- as.data.frame(file_name)
+View(df)
+```

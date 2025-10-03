@@ -1,9 +1,9 @@
 
-# file_path : CHUM_Data/input_data_cleaned.csv
+
 chronic_pathologies <- function(file_path_main){
 
 
-  #file_path_main <- "CHUM_Data/input_data_cleaned.csv"
+
   # Load the episodes data
   df <- fread(file_path_main, sep = ",", stringsAsFactors = FALSE)
 
@@ -385,7 +385,7 @@ chronic_pathologies <- function(file_path_main){
     select(patient_id, start_date, updated_icd_codes) # Select only the desired columns
 
 
-  #out_path <- "CHUM_Data/updated_episodes_carry_forward.csv"
+
 
   #write.csv(df_combined, file = out_path, row.names = FALSE)
   out_path <- paste0("LABTNSCPSS_Data/updated_episodes_carry_forward_", input_basename, ".csv")

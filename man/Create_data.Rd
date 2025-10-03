@@ -1,6 +1,6 @@
-\name{create_CHUMData_v2}
-\alias{create_CHUMData_v2}
-\title{Create CHUM Data}
+\name{create_Data}
+\alias{create_Data}
+\title{Create Data}
 \description{
   This script reads raw data from a CSV file, processes it by renaming columns based on a provided
   mapping, performs date transformations, cleans ICD codes, and saves the cleaned dataset to a new CSV file.
@@ -13,7 +13,7 @@
   - Parses and converts the `start_date` column to a proper Date format.
   - Cleans up the `ICD` codes by removing periods.
 
-  The resulting cleaned dataset is then written to `CHUM_Data/input_data_cleaned.csv`.
+  The resulting cleaned dataset is then written to `LABTNSCPSS_Data/input_data_cleaned.csv`.
 }
 \note{
   This script is intended to be sourced and executed directly. It does not return a value
@@ -21,5 +21,5 @@
 }
 \examples{
   # To run the script:
-  source('./R/create_CHUMData_v2.R')
+  source('./R/create_Data.R')
 }

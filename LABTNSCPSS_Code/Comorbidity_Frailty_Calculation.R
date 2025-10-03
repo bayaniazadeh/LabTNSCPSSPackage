@@ -67,15 +67,18 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
 
   final_data_elixhauser <- elixhauser_popICD10CA %>%
-    mutate(Elix_score = rowSums(select(., -id)))
+    mutate(
+      # make sure missing are treated as 0 for the logic
+      diabunc  = if_else(coalesce(diabunc,  0L) == 1L & coalesce(diabc, 0L) == 1L, 0L, coalesce(diabunc, 0L)),
+      diabc = coalesce(diabc, 0L)
+    ) %>%
+    mutate(
+      Elix_score = rowSums(across(-id), na.rm = TRUE)
+    ) %>%
+    separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_", remove = TRUE)
 
 
-  final_data_elixhauser <- final_data_elixhauser %>%
-    separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
 
-  # Write the final data
-
-  #file_path <- glue("CHUM_Data/Comorbidity_{mapping_Elix}.csv")
   file_path <- glue("LABTNSCPSS_Data/Comorbidity_{mapping_Elix}_{input_basename}.csv")
 
   file_path
@@ -103,13 +106,6 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
   #mapping_Ch = "charlson_icd10ca_labtns"#"charlson_icd10ca_labtns"
   chalrson_popICD10CA <- comorbidity(x = df_comrbidity, id = "id", code = "code", map = mapping_Ch, assign0 = FALSE)
 
-
-  final_data_charlson <- chalrson_popICD10CA %>%
-    mutate(Charlson_score := rowSums(select(., -id)))
-
-
-  final_data_charlson <- final_data_charlson %>%
-    separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
 
   # Write the final data
 
@@ -143,8 +139,15 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
   # Loop through columns and assign labels
  # for (i in 1:length(column_names)) {
   #  attr(final_data_charlson[[column_names[i]]], "label") <- chalson_labels[i]
-  #}
-
+  #}chalrson_popICD10CA
+  final_data_charlson <- chalrson_popICD10CA %>%
+    mutate(
+      # treat NA as 0 for the logic
+      diab   = if_else(coalesce(diab,   0L) == 1L & coalesce(diabwc, 0L) == 1L, 0L, coalesce(diab, 0L)),
+      diabwc = coalesce(diabwc, 0L),
+      Charlson_score = rowSums(across(-id), na.rm = TRUE)
+    ) %>%
+    separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
   #df_with_labels <- rbind(chalson_labels, final_data_charlson)
 
   file_path <- glue("LABTNSCPSS_Data/Comorbidity_{mapping_Ch}_{input_basename}.csv")
@@ -170,13 +173,6 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
   #combined_icd10ca_labtns
   #mapping_combined = "combined_icd10ca_labtns"#"charlson_icd10ca_labtns"
   Combined_popICD10CA <- comorbidity(x = df_comrbidity, id = "id", code = "code", map = mapping_combined, assign0 = FALSE)
-
-
-  final_data_combined <- Combined_popICD10CA %>%
-    mutate(Combined_score := rowSums(select(., -id)))
-
-  final_data_combined <- final_data_combined %>%
-    separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
 
   # Write the final data
 
@@ -229,7 +225,14 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
   #for (i in 1:length(column_names)) {
   #  attr(final_data_combined[[column_names[i]]], "label") <- combined_labels[i]
   #}
-
+  final_data_combined <- Combined_popICD10CA %>%
+    mutate(
+      # treat NAs as 0 for the logic
+      Diab_C  = coalesce(Diab_C,  0L),
+      Diab_NC = if_else(Diab_C == 1L & coalesce(Diab_NC, 0L) == 1L, 0L, coalesce(Diab_NC, 0L)),
+      Combined_score = rowSums(across(-id), na.rm = TRUE)
+    ) %>%
+    separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
   #df_with_labels <- rbind(combined_labels, final_data_combined) # new
 
   file_path <- glue("LABTNSCPSS_Data/Comorbidity_{mapping_combined}_{input_basename}.csv")

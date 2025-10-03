@@ -2,7 +2,7 @@
 source("./LABTNSCPSS_Code/setup_package.R")  # Load and install required packages
 source("./LABTNSCPSS_Code/source_scripts.R")  # Source external scripts
 
-#source("./CHUM_Code/chronic_pathologies_v2.R")
+
 
 coding_system <- get_coding_system()
 
@@ -10,7 +10,7 @@ coding_system <- get_coding_system()
 invisible(sapply(list.files("LABTNSCPSS_Code", pattern = "\\.R$", full.names = TRUE), source))
 
 
-#input_file <- "./CHUM_Data/data_test1.csv", mimic_test2.csv
+
 input_file <- "./LABTNSCPSS_Data/testpackage.csv"
 input_basename <- tools::file_path_sans_ext(basename(input_file))
 cleaned_path <- paste0("LABTNSCPSS_Data/input_data_cleaned_", input_basename, ".csv")
@@ -52,10 +52,6 @@ df_result <- run_pipeline(input_file)
 
 list2env(df_result, envir = .GlobalEnv)
 
-write.xlsx(final_data_charlson, "my_data.xlsx", rowNames = FALSE)
+#write.xlsx(final_data_charlson, "my_data.xlsx", rowNames = FALSE)
 
-#Create_data(input_file)
-#chronic_pathologies("CHUM_Data/input_data_cleaned.csv")
-#fr_grouped <- Frailty_Calculation('CHUM_Data/updated_episodes_V2.csv')
-#Comorbidity_Frailty_Calculation("CHUM_Data/episode_test.csv")
 
