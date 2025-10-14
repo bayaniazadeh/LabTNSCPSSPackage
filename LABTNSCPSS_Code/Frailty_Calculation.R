@@ -7,366 +7,255 @@ library(purrr)
 Frailty_Calculation <- function(file_path_main){
   # Read the updated episode data with chronic pathologies
 
-  df <- fread(file_path_main, sep = ',', encoding = 'UTF-8')
+  data.table::setDTthreads(percent = 100)
 
-  # Read the correspondent table of ICD codes- frailty categories
-  # Codes: ICD, Category: frailty_category
+  # ---------- helpers ----------
+  normalize_codes <- function(x) toupper(gsub("\\.", "", trimws(as.character(x))))
 
-  if (coding_system == "ICD-10-CA") { # Other options: "ICD-10-CM", and "ICD-11"
+  # ---------- input ----------
+  df <- fread(file_path_main, sep = ",", encoding = "UTF-8", showProgress = FALSE)
+  setDT(df)
+
+  # required cols
+  req_cols <- c("patient_id","start_date","episode_id","updated_icd_codes")
+  miss <- setdiff(req_cols, names(df))
+  if (length(miss)) stop("Missing columns in input CSV: ", paste(miss, collapse=", "))
+
+  # stable types for keys
+  df[, patient_id := as.character(patient_id)]
+  df[, episode_id := as.character(episode_id)]
+  # keep start_date class as-is (Date/POSIXct/char); joins are by value
+
+  # ---------- mapping tables (frailty: df_fr) ----------
+  if (coding_system == "ICD-10-CA") {
     data("Frailty_mapping")
-    df_fr <- Frailty_mapping
-
-    names(df_fr)[names(df_fr) == "ICD_10_CA_LabTNS"] <- "ICD"
-    names(df_fr)[names(df_fr) == "frailty_Comorbidity"] <- "frailty_category"
-
-
-  }else if (coding_system == "ICD-10-CM"){
-
+    df_fr <- as.data.table(Frailty_mapping)
+    setnames(df_fr, c("ICD_10_CA_LabTNS","frailty_Comorbidity"), c("ICD","frailty_category"))
+  } else if (coding_system == "ICD-10-CM") {
     data("Frailty_ICD10CM")
-    df_fr <- Frailty_ICD10CM
-
-    names(df_fr)[names(df_fr) == "CIM10CMcodes"] <- "ICD"
-    names(df_fr)[names(df_fr) == "frailty_Comorbidity"] <- "frailty_category"
-
-  }else if (coding_system == "ICD-11"){
-
+    df_fr <- as.data.table(Frailty_ICD10CM)
+    setnames(df_fr, c("CIM10CMcodes","frailty_Comorbidity"), c("ICD","frailty_category"))
+  } else if (coding_system == "ICD-11") {
     data("Frailty_ICD11")
-    df_fr <- Frailty_ICD11
-
-    names(df_fr)[names(df_fr) == "ICD11codes"] <- "ICD"
-    names(df_fr)[names(df_fr) == "frailty_Comorbidity"] <- "frailty_category"
-
+    df_fr <- as.data.table(Frailty_ICD11)
+    setnames(df_fr, c("ICD11codes","frailty_Comorbidity"), c("ICD","frailty_category"))
+  } else {
+    stop("coding_system must be one of: 'ICD-10-CA','ICD-10-CM','ICD-11'")
   }
-
-
-
-  # Load the correspondent table containing frailty_category categories
-
-  data("Frailty_Comorbidity_Mapping")
-  df_fr_mo <- Frailty_Comorbidity_Mapping
-
-  if (coding_system == "ICD-10-CA") { # Other options: "ICD-10-CM", and "ICD-11"
-
-    names(df_fr_mo)[names(df_fr_mo) == "ICD_10_CA_Codes"] <- "ICD"
-
-  }else if (coding_system == "ICD-10-CM"){
-
-    names(df_fr_mo)[names(df_fr_mo) == "CIM10CMcodes"] <- "ICD"
-
-  }else if (coding_system == "ICD-11"){
-
-    names(df_fr_mo)[names(df_fr_mo) == "ICD11codes"] <- "ICD"
-
-  }
-
-
-  ################################  Preprocessing the data  #########################
-
-  # clean icd codes
-  remove_dots <- function(x) {
-    gsub("\\.", "", x)
-  }
-
-  # Convert 'Code' column to character type and remove dots
-  df_fr$ICD <- as.character(df_fr$ICD)
-  df_fr$ICD <- remove_dots(df_fr$ICD)
-
-
-  # Sort data by 'Patient_id' and 'start_date'
-  df_sorted <- df %>%
-    arrange(patient_id, start_date)
-
-
-  filtered_df_fr <- df_sorted #[!is.na(df_sorted$date_t0), ]
-  filtered_df <- df_sorted
-
-  ################################### Calculate Frailty scores ###################
-
-  # Get unique categories from df_fr
+  df_fr[, ICD := normalize_codes(ICD)]
+  df_fr[, frailty_category := as.character(frailty_category)]
   unique_categories <- unique(df_fr$frailty_category)
 
-  # Add new columns to filtered_df for each category with initial values of 0, prefixed with "fr_"
-  for (category in unique_categories) {
-    filtered_df_fr[[category]] <- 0
+  # ---------- mapping tables (morbi-frailty: df_fr_mo) ----------
+  data("Frailty_Comorbidity_Mapping")
+  df_fr_mo <- as.data.table(Frailty_Comorbidity_Mapping)
+  if (coding_system == "ICD-10-CA") {
+    setnames(df_fr_mo, "ICD_10_CA_Codes", "ICD")
+  } else if (coding_system == "ICD-10-CM") {
+    setnames(df_fr_mo, "CIM10CMcodes", "ICD")
+  } else {
+    setnames(df_fr_mo, "ICD11codes", "ICD")
   }
-
-  update_columns <- function(df_fr, filtered_df) {
-    # ---- Normalize the mapping table (df_fr) ----
-    df_fr$ICD <- toupper(gsub("\\.", "", trimws(as.character(df_fr$ICD))))
-    df_fr$frailty_category <- as.character(df_fr$frailty_category)
-
-    # category -> vector of ICD codes
-    category_codes_list <- split(df_fr$ICD, df_fr$frailty_category)
-    unique_categories <- names(category_codes_list)
-
-    # Ensure indicator columns exist, initialized to 0L
-    for (cat in unique_categories) {
-      if (!(cat %in% names(filtered_df))) filtered_df[[cat]] <- 0L
-    }
-
-    # ---- Parse and normalize the updated_icd_codes column (comma-separated text) ----
-    # e.g., "I100, E119, NA"  -> c("I100","E119")
-    filtered_df$updated_icd_codes <- lapply(
-      strsplit(as.character(filtered_df$updated_icd_codes), ","),
-      function(tokens) {
-        codes <- trimws(tokens)
-        codes <- codes[!(codes %in% c("", "NA", "NaN", "NULL"))]
-        codes <- toupper(gsub("\\.", "", codes))
-        unique(codes)
-      }
-    )
-
-    # Precompute 3-char prefixes for each category to speed up fallback matching
-    cat_prefixes <- lapply(category_codes_list, function(v) substr(v, 1, 3))
-
-    # ---- Row-wise mapping: exact first, then 3-char prefix ----
-    n <- nrow(filtered_df)
-    for (i in seq_len(n)) {
-      codes <- filtered_df$updated_icd_codes[[i]]
-      if (length(codes) == 0L) next
-
-      for (code in codes) {
-        matched <- FALSE
-
-        # Exact match: set any category that contains this code
-        for (cat in unique_categories) {
-          if (code %in% category_codes_list[[cat]]) {
-            filtered_df[i, cat] <- 1L
-            matched <- TRUE
-            # do NOT break out entirely; a code might map to multiple cats,
-            # but if you want first-hit only, uncomment the next line:
-            # break
-          }
-        }
-        if (matched) next
-
-        # Fallback: 3-char prefix match
-        cp <- substr(code, 1, 3)
-        for (cat in unique_categories) {
-          if (any(cp == cat_prefixes[[cat]])) {
-            filtered_df[i, cat] <- 1L
-            # similarly, don't break if multi-map is allowed
-            # break
-          }
-        }
-      }
-    }
-
-    # Make sure indicators are integer 0/1 (and no NAs)
-    for (cat in unique_categories) {
-      filtered_df[[cat]] <- as.integer(replace(filtered_df[[cat]], is.na(filtered_df[[cat]]), 0L))
-    }
-
-    filtered_df
-  }
-
-  # Apply the function
-  filtered_df_fr <- update_columns(df_fr, filtered_df_fr)
-
-
-  ### Check sum of a frailty score
-  #sum(filtered_df$`Cardiac and vascular`, na.rm = TRUE)
-
-  # Have to convert columns containing lists before writing in csv!
-
-
-  # Compute frailty score by summing only the selected columns from unique_categories
-  # Compute frailty score by summing only the selected columns from unique_categories
-  frailty_pop2 <- filtered_df_fr %>%
-    mutate(frailty_score = rowSums(select(., all_of(unique_categories)), na.rm = TRUE))  # Exclude NA values
-
-  frailty_pop2 <- frailty_pop2 %>%
-    mutate(across(where(is.list), ~ sapply(., function(x) paste(unlist(x), collapse = ","))))
-
-  frag_final <- frailty_pop2 %>%
-    select(patient_id, start_date, episode_id, all_of(unique_categories))
-
-
-  cols_to_exclude <- c("ICD", "category_codes", "chronique_code_cat2", "cleaned_chronique_code_cat2",
-                       "chronique_code_cat1", "cleaned_chronique_code_cat1", "basal_codes", "updated_icd_codes")
-
-  frailty_pop2 <- frailty_pop2 %>%
-    select(-all_of(cols_to_exclude))
-
-  # Write the final data, could be used for verifications
-
-  #write.csv(frailty_pop2, file = file_path, row.names = FALSE) # or filtered_df
-  file_path <- paste0("LABTNSCPSS_Data/Frailt_categories_", input_basename, ".csv")
-  # Write to file
-  write.csv(frailty_pop2, file = file_path, row.names = FALSE)
-
-  # You can proceed with the rest of your operations as needed
-  #fr_grouped <- frag_final %>%
-  #  select(patient_id, start_date, episode_id, all_of(unique_categories)) %>%  # Select episode_id and columns in unique_categories
-  #  mutate(frailty_score = rowSums(select(., all_of(unique_categories)), na.rm = TRUE))  # Calculate frailty_score
-
-  fr_grouped <- frag_final %>%
-    select(patient_id, start_date, episode_id, all_of(unique_categories)) %>%
-    mutate(
-      frailty_score = rowSums(select(., all_of(unique_categories)), na.rm = TRUE),
-      id = paste(patient_id, episode_id, sep = "_")  # Create id column
-    )
-
-  ############ Calculate frailty_category
+  df_fr_mo[, ICD := normalize_codes(ICD)]
+  df_fr_mo[, MorbiFrailtyCategory := as.character(MorbiFrailtyCategory)]
   unique_categories_FM <- unique(df_fr_mo$MorbiFrailtyCategory)
 
-  # Add new columns to filtered_df for each category with initial values of 0, prefixed with "fr_"
-  for (category in unique_categories_FM) {
-    filtered_df[[category]] <- 0
+  # ---------- split updated_icd_codes once (vectorized) ----------
+  df[, row_id := .I]
+  df[, updated_icd_codes := as.character(updated_icd_codes)]
+  codes_list <- strsplit(df$updated_icd_codes, ",", fixed = TRUE)
+  codes_list <- lapply(codes_list, function(v) {
+    if (is.null(v)) return(character(0))
+    v <- normalize_codes(v)
+    v <- v[!(v %in% c("", "NA", "NAN", "NULL"))]
+    unique(v)
+  })
+
+  total_codes <- sum(lengths(codes_list))
+  if (total_codes == 0L) {
+    # fabricate zero outputs if no codes at all
+    fr_grouped <- df[, .(patient_id, start_date, episode_id)]
+    for (cat in unique_categories) fr_grouped[, (cat) := 0L]
+    fr_grouped[, `:=`(frailty_score = 0L, id = paste(patient_id, episode_id, sep = "_"))]
+
+    fr_grouped_como <- df[, .(patient_id, start_date, episode_id)]
+    for (cat in unique_categories_FM) fr_grouped_como[, (cat) := 0L]
+    fr_grouped_como[, morbi_frailty_score := 0L]
+
+    # write CSVs exactly like your code
+    file_path1 <- paste0("LABTNSCPSS_Data/Frailt_categories_", input_basename, ".csv")
+    fwrite(fr_grouped, file_path1)
+    file_path2 <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_categories_", input_basename, ".csv")
+    fwrite(fr_grouped_como, file_path2)
+
+    return(list(fr_grouped = as_tibble(fr_grouped), fr_grouped_como = as_tibble(fr_grouped_como)))
   }
 
+  # long table with minimal columns (saves RAM)
+  codes_long <- data.table(
+    row_id = rep.int(df$row_id, lengths(codes_list)),
+    code   = unlist(codes_list, use.names = FALSE)
+  )
 
-  # --- helpers
-  .normalize_codes <- function(x) toupper(gsub("\\.", "", trimws(as.character(x))))
-  .parse_updated_icd <- function(x) {
-    # Accept list-column or character
-    if (is.list(x)) {
-      lapply(x, function(v) {
-        v <- .normalize_codes(v)
-        v <- v[!(v %in% c("", "NA", "NAN", "NULL"))]
-        unique(v)
-      })
+  # ---------- function: map codes to categories via exact then prefix ----------
+  map_to_indicators <- function(map_dt, cat_col, nrows) {
+    # map_dt has columns: ICD and <cat_col> (category name column)
+    data.table::setDT(map_dt)
+    # normalize & keep only the two columns we need
+    map_dt[, ICD := normalize_codes(ICD)]
+    map_dt[, category := as.character(map_dt[[cat_col]])]
+    map_dt <- unique(map_dt[, .(ICD, category)])
+
+    # exact join: codes_long (row_id, code) X map_dt(ICD, category)
+    data.table::setkey(codes_long, code)
+    data.table::setkey(map_dt, ICD)
+
+    exact_hits <- map_dt[codes_long, on = .(ICD = code), nomatch = 0L][
+      , .(row_id, category)]
+
+    # unmatched (row_id, code) pairs for prefix step
+    if (nrow(exact_hits)) {
+      # build matched pairs (row_id, code) via a light join
+      matched_pairs <- unique(map_dt[codes_long, on = .(ICD = code), nomatch = 0L][
+        , .(row_id, code = ICD)])
+      data.table::setkey(matched_pairs, row_id, code)
+      tmp_codes <- codes_long[, .(row_id, code)]
+      data.table::setkey(tmp_codes, row_id, code)
+      unmatched <- data.table::fsetdiff(tmp_codes, matched_pairs)
     } else {
-      # character vector (one string per row, comma-separated)
-      lapply(strsplit(as.character(x), ","), function(v) {
-        v <- .normalize_codes(v)
-        v <- v[!(v %in% c("", "NA", "NAN", "NULL"))]
-        unique(v)
-      })
+      unmatched <- unique(codes_long[, .(row_id, code)])
     }
+
+    # combine as data.table (avoid base rbind)
+    all_hits <- exact_hits#data.table::rbindlist(list(exact_hits, prefix_hits), use.names = TRUE, fill = TRUE)
+
+    if (nrow(all_hits)) {
+      all_hits <- unique(all_hits)[, present := 1L]
+      ind_wide <- data.table::dcast(
+        all_hits,
+        row_id ~ category,
+        value.var = "present",
+        fun.aggregate = function(x) as.integer(length(x) > 0L),
+        fill = 0L
+      )
+    } else {
+      # no categories matched anywhere: return a 1-col data.table with row_id 1..nrows
+      ind_wide <- data.table::data.table(row_id = seq_len(nrows))
+    }
+
+    data.table::setDT(ind_wide)  # ensure class
+    ind_wide
   }
 
-  Update_Comorbidity_Frailty <- function(df_fr_mo, filtered_df) {
-    # --- 1) Normalize mapping table
-    df_fr_mo <- data.frame(
-      ICD = .normalize_codes(df_fr_mo$ICD),
-      MorbiFrailtyCategory = as.character(df_fr_mo$MorbiFrailtyCategory),
-      stringsAsFactors = FALSE
+
+  # ---------- FRAILTY (df_fr) ----------
+  ind_fr <- map_to_indicators(df_fr[, .(ICD, frailty_category)], "frailty_category")
+  setkey(ind_fr, row_id)
+  setkey(df, row_id)
+  frailty_pop2 <- ind_fr[df]  # keep all rows
+
+  # ensure all category columns exist
+  for (cat in unique_categories) if (!cat %in% names(frailty_pop2)) frailty_pop2[, (cat) := 0L]
+  frailty_pop2[, (unique_categories) := lapply(.SD, function(x) as.integer(replace(x, is.na(x), 0L))),
+               .SDcols = unique_categories]
+
+  # frailty_score
+  frailty_pop2[, frailty_score := as.integer(rowSums(.SD, na.rm = TRUE)), .SDcols = unique_categories]
+
+  # build outputs consistent with your code
+  frag_final <- frailty_pop2[, c("patient_id","start_date","episode_id", unique_categories), with = FALSE]
+  fr_grouped <- frag_final %>%
+    as_tibble() %>%
+    dplyr::mutate(
+      frailty_score = rowSums(dplyr::select(., dplyr::all_of(unique_categories)), na.rm = TRUE),
+      id = paste(patient_id, episode_id, sep = "_")
     )
 
-    # Build fast lookup maps:
-    # exact_map: code -> vector of categories
-    exact_map <- split(df_fr_mo$MorbiFrailtyCategory, df_fr_mo$ICD)
+  # write Frailt_categories_...
+  file_path1 <- paste0("LABTNSCPSS_Data/Frailt_categories_", input_basename, ".csv")
+  fwrite(fr_grouped, file_path1)
 
-    # prefix_map: 3-char prefix -> vector of categories
-    df_fr_mo$prefix <- substr(df_fr_mo$ICD, 1, 3)
-    prefix_map <- split(df_fr_mo$MorbiFrailtyCategory, df_fr_mo$prefix)
+  # ---------- MORBI-FRAILTY (df_fr_mo) ----------
+  ind_mo <- map_to_indicators(df_fr_mo[, .(ICD, MorbiFrailtyCategory)], "MorbiFrailtyCategory")
+  setkey(ind_mo, row_id)
+  frailty_pop_CO <- ind_mo[df]  # keep all rows
 
-    # Unique category set
-    unique_categories <- sort(unique(df_fr_mo$MorbiFrailtyCategory))
+  # ensure all morbi-frailty columns exist
+  for (cat in unique_categories_FM) if (!cat %in% names(frailty_pop_CO)) frailty_pop_CO[, (cat) := 0L]
+  frailty_pop_CO[, (unique_categories_FM) := lapply(.SD, function(x) as.integer(replace(x, is.na(x), 0L))),
+                 .SDcols = unique_categories_FM]
 
-    # --- 2) Ensure indicator columns exist as integer 0/1
-    for (cat in unique_categories) {
-      if (!cat %in% names(filtered_df)) filtered_df[[cat]] <- 0L
-      # coerce to integer and fill NAs with 0
-      if (!is.integer(filtered_df[[cat]])) {
-        filtered_df[[cat]] <- as.integer(filtered_df[[cat]])
-      }
-      filtered_df[[cat]][is.na(filtered_df[[cat]])] <- 0L
-    }
-
-    # --- 3) Ensure updated_icd_codes is a clean list-column of codes
-    filtered_df$updated_icd_codes <- .parse_updated_icd(filtered_df$updated_icd_codes)
-
-    # --- 4) Row-wise assignment with exact > prefix fallback
-    n <- nrow(filtered_df)
-    for (i in seq_len(n)) {
-      codes <- filtered_df$updated_icd_codes[[i]]
-      if (length(codes) == 0L) next
-
-      for (code in codes) {
-        # Try exact
-        cats_exact <- exact_map[[code]]
-        if (!is.null(cats_exact) && length(cats_exact)) {
-          # set all exact categories
-          for (cat in unique(cats_exact)) {
-            filtered_df[i, cat] <- 1L
-          }
-          next  # skip prefix for this code
-        }
-
-        # Fallback to prefix
-        pref <- substr(code, 1, 3)
-        cats_pref <- prefix_map[[pref]]
-        if (!is.null(cats_pref) && length(cats_pref)) {
-          for (cat in unique(cats_pref)) {
-            filtered_df[i, cat] <- 1L
-          }
-        }
-      }
-    }
-
-    # Make sure nothing is NA and all are integers 0/1
-    for (cat in unique_categories) {
-      v <- filtered_df[[cat]]
-      v[is.na(v)] <- 0L
-      filtered_df[[cat]] <- as.integer(v > 0L)
-    }
-
-    filtered_df
+  # exclusivity (Diab/HBP)
+  for (nm in c("DiabC","DiabNC","HBPComp","HBPNoComp")) {
+    if (!nm %in% names(frailty_pop_CO)) frailty_pop_CO[, (nm) := 0L]
+    frailty_pop_CO[, (nm) := as.integer(replace(get(nm), is.na(get(nm)), 0L))]
   }
 
 
-  # Apply the function
-  filtered_df_FR_CO <- Update_Comorbidity_Frailty(df_fr_mo, filtered_df)
+  ### New
+  # Exclusivity (unchanged)
+  frailty_pop_CO[, DiabNC    := fifelse(DiabC   == 1L & DiabNC    == 1L, 0L, DiabNC)]
+  frailty_pop_CO[, HBPNoComp := fifelse(HBPComp == 1L & HBPNoComp == 1L, 0L, HBPNoComp)]
 
-  # Compute frailty score by summing only the selected columns from unique_categories
-  frailty_pop_CO <- filtered_df_FR_CO %>%
-    mutate(frailty_score = rowSums(select(., all_of(unique_categories_FM)), na.rm = TRUE))  # Exclude NA values
+  # morbi_frailty_score (unchanged)
+  frailty_pop_CO[, morbi_frailty_score := as.integer(rowSums(.SD, na.rm = TRUE)),
+                 .SDcols = unique_categories_FM]
 
-  frailty_pop_CO <- frailty_pop_CO %>%
-    mutate(across(where(is.list), ~ sapply(., function(x) paste(unlist(x), collapse = ","))))
+  # Build Frag_Co_final as a data.table
+  Frag_Co_final <- frailty_pop_CO[, c("patient_id","start_date","episode_id",
+                                      unique_categories_FM,
+                                      "DiabC","DiabNC","HBPComp","HBPNoComp",
+                                      "morbi_frailty_score"), with = FALSE]
 
+  # --- Collapse duplicate-named columns (data.table-safe) ---
+  # --- Collapse duplicate-named columns in Frag_Co_final (index-safe) ---
+  nm   <- names(Frag_Co_final)
+  dups <- nm[duplicated(nm)]
 
-  # Select columns based on unique_categories
-  Frag_Co_final <- frailty_pop_CO %>%
-    select(patient_id, start_date, episode_id, all_of(unique_categories_FM))
+  if (length(dups) > 0L) {
+    for (n in unique(dups)) {
+      # positions of all columns with this duplicated name
+      idx <- which(nm == n)
 
+      # 1) coerce each duplicate col to integer 0/1 (NA -> 0), by index
+      for (k in idx) {
+        v <- as.integer(Frag_Co_final[[k]])
+        v[is.na(v)] <- 0L
+        data.table::set(Frag_Co_final, j = k, value = v)
+      }
 
+      # 2) merged = row-wise OR (pmax) across all duplicates
+      merged <- Reduce(function(a, b) pmax(a, b, na.rm = TRUE),
+                       lapply(idx, function(k) Frag_Co_final[[k]]))
+      data.table::set(Frag_Co_final, j = idx[1], value = as.integer(merged))
 
-  # You can proceed with the rest of your operations as needed
-  # fr_grouped_como <- Frag_Co_final %>%
-  #  select(patient_id, start_date, episode_id, all_of(unique_categories_FM)) %>%
-  # mutate(
-  # keep Diab = 1; if both Diab & DiabNC are 1, set DiabNC = 0
-  #  DiabC   = coalesce(.data[["DiabC"]], 0L),
-  # DiabNC = if_else(.data[["DiabC"]] == 1L & coalesce(.data[["DiabNC"]], 0L) == 1L,
-  #                 0L, coalesce(.data[["DiabNC"]], 0L))
-  #) %>%
-  #mutate(
-  # morbi_frailty_score = rowSums(dplyr::select(., all_of(unique_categories_FM)), na.rm = TRUE)
-  #)
+      # 3) drop all but the first occurrence (remove by index, from right to left)
+      if (length(idx) > 1L) {
+        for (k in rev(idx[-1])) {
+          data.table::set(Frag_Co_final, j = k, value = NULL)
+        }
+        nm <- names(Frag_Co_final)  # refresh names after deletions
+      }
+    }
+  }
+
+  # --- Select without duplicates into tibble ---
+  fm_flags      <- intersect(c("DiabC","DiabNC","HBPComp","HBPNoComp"), names(Frag_Co_final))
+  cats_fm_clean <- setdiff(unique(unique_categories_FM), fm_flags)
+
   fr_grouped_como <- Frag_Co_final %>%
+    tibble::as_tibble() %>%
     dplyr::select(
       patient_id, start_date, episode_id,
-      all_of(unique_categories_FM),
-      DiabC, DiabNC, HBPComp, HBPNoComp
-    ) %>%
-    dplyr::mutate(
-      # Force 0/1 integers, replace NA with 0
-      dplyr::across(
-        c(DiabC, DiabNC, HBPComp, HBPNoComp),
-        ~ as.integer(dplyr::coalesce(as.integer(.x), 0L))
-      )
-    ) %>%
-    dplyr::mutate(
-      # Exclusivity rules:
-      # 1) If both diabetes flags are 1, keep DiabC and zero DiabNC
-      DiabNC = dplyr::if_else(DiabC == 1L & DiabNC == 1L, 0L, DiabNC),
-      # 2) If both hypertension flags are 1, keep HBPComp and zero HBPNoComp
-      HBPNoComp = dplyr::if_else(HBPComp == 1L & HBPNoComp == 1L, 0L, HBPNoComp)
-    ) %>%
-    dplyr::mutate(
-      morbi_frailty_score =
-        rowSums(dplyr::select(., all_of(unique_categories_FM)), na.rm = TRUE) |> as.integer()
+      dplyr::all_of(cats_fm_clean),
+      tidyselect::any_of(fm_flags),
+      morbi_frailty_score
     )
 
 
-  #write.csv(fr_grouped_como, file = file_path, row.names = FALSE) # or filtered_df
-  file_path <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_categories_", input_basename, ".csv")
-
-  # Write to CSV
-  write.csv(fr_grouped_como, file = file_path, row.names = FALSE)
+  # write Frailty_comorbidity_categories_...
+  file_path2 <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_categories_", input_basename, ".csv")
+  fwrite(fr_grouped_como, file_path2)
 
   return(list(fr_grouped = fr_grouped, fr_grouped_como = fr_grouped_como))
 
