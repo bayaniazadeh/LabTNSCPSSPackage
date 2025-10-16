@@ -9,22 +9,23 @@ chronic_pathologies <- function(file_path_main){
   # Load the correspondent table containing ICD codes and their chronic categories
   if (coding_system == "ICD-10-CA") {
     data("ICD10CA_categorisation")
-    codes_df <- get("ICD10CA_categorisation")
+    #codes_df <- get("ICD10CA_categorisation")
+    codes_df <- get("ICD10CA_categorisation", envir = asNamespace("LabTNSCPSSPackage"))
     names(codes_df)[names(codes_df) == "ICD10CAcodes"] <- "ICD"
 
   } else if (coding_system == "ICD-10-CM") {
     data("ICD10CM_categorisation")
-    codes_df <- get("ICD10CM_categorisation")
+    #codes_df <- get("ICD10CM_categorisation")
+    codes_df <- get("ICD10CM_categorisation", envir = asNamespace("LabTNSCPSSPackage"))
     names(codes_df)[names(codes_df) == "CIM10CMcodes"] <- "ICD"
 
   } else if (coding_system == "ICD-11") {
     data("ICD11_categorisation")
-    codes_df <- get("ICD11_categorisation")
+    #codes_df <- get("ICD11_categorisation")
+    codes_df <- get("ICD11_categorisation", envir = asNamespace("LabTNSCPSSPackage"))
     names(codes_df)[names(codes_df) == "ICD11codes"] <- "ICD"
   }
 
-
-  colnames(codes_df)
   ############################ Step 1: detect chronic categories for patients' ICD codes ####################
 
   # Ensure ICD10CAcodes are read as strings
@@ -50,38 +51,38 @@ chronic_pathologies <- function(file_path_main){
     summarise(ICD = list(ICD), .groups = 'drop')
 
 
+  normalize_codes <- function(x) toupper(gsub("\\.", "", trimws(as.character(x))))
 
-  # Create a fast lookup corresponding table using data.table
-  codes_dict <- data.table::rbindlist(
-    lapply(seq_len(nrow(codes_df)), function(i) {
-      data.table(ICD = codes_df$ICD[[i]], category = codes_df$category[i])
-    })
-  )
+  # after you set names(codes_df) and before building codes_dict:
+  codes_df$ICD <- normalize_codes(codes_df$ICD)
 
-  # Function to assign categories ensuring the length matches the input ICD codes
+  # also normalize the patient-side codes column before summarise (you already remove dots; do full normalize)
+  df <- df %>%
+    mutate(ICD = normalize_codes(ICD))
+
+
+  # Expect one ICD (or ICD prefix) per row
+  codes_dict <- data.table(
+    ICD      = codes_df$ICD,
+    category = as.character(codes_df$category)
+  )[!is.na(ICD) & nzchar(ICD)]
+
+  # ensure uniqueness if your table has duplicates
+  codes_dict <- unique(codes_dict, by = c("ICD", "category"))
+
   assign_categories <- function(icd_codes) {
-    # Convert the list of ICD codes to a data.table
-    icd_codes_list <- unlist(strsplit(icd_codes, ", "))
-
-    # Check if icd_codes_list is empty
-    if (length(icd_codes_list) == 0) return(character(0))
-
-    icd_codes_dt <- data.table(ICD = icd_codes_list)
-
-    # Perform a join with codes_dict to find matching categories
-    result <- merge(icd_codes_dt, codes_dict, by = "ICD", all.x = TRUE)
-
-
-    categories <- result[order(match(result$ICD, icd_codes_list)), category]
-
-    # Replace NA values with "None"
-    categories[is.na(categories)] <- "None"
-
-    # Return a character vector with the same length as the input ICD codes
-    return(categories)
-
+    codes <- unlist(strsplit(icd_codes, ",\\s*"))   # robust split (with/without spaces)
+    if (!length(codes)) return(character(0))
+    tmp <- data.table(ICD = codes, ord = seq_along(codes))
+    setkey(tmp, ICD)
+    # exact join
+    res <- codes_dict[tmp, on = .(ICD), nomatch = 0L][, .(ICD, category, ord)]
+    # reinsert missing as "None" to preserve length/order
+    out <- character(length(codes))
+    out[] <- "None"
+    if (nrow(res)) out[res$ord] <- res$category
+    out
   }
-
 
   #  assign categories and put in category_codes column
   df_summary$category_codes <- lapply(df_summary$ICD, assign_categories)

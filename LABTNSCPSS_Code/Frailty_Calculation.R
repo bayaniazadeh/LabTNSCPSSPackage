@@ -48,7 +48,10 @@ Frailty_Calculation <- function(file_path_main){
 
   # ---------- mapping tables (morbi-frailty: df_fr_mo) ----------
   data("Frailty_Comorbidity_Mapping")
-  df_fr_mo <- as.data.table(Frailty_Comorbidity_Mapping)
+  #df_fr_mo <- as.data.table(Frailty_Comorbidity_Mapping)
+  df_fr_mo <- data.table::as.data.table(
+    get("Frailty_Comorbidity_Mapping", envir = environment())
+  )
   if (coding_system == "ICD-10-CA") {
     setnames(df_fr_mo, "ICD_10_CA_Codes", "ICD")
   } else if (coding_system == "ICD-10-CM") {

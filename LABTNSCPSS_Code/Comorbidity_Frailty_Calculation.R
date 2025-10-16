@@ -219,7 +219,7 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
 
   # Assign labels using a loop
-  column_names <- colnames(final_data_combined)  # Get column names
+  #column_names <- colnames(final_data_combined)  # Get column names
 
   # Loop through columns and assign labels
   #for (i in 1:length(column_names)) {
