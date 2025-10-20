@@ -10,19 +10,19 @@ chronic_pathologies <- function(file_path_main){
   if (coding_system == "ICD-10-CA") {
     data("ICD10CA_categorisation")
     #codes_df <- get("ICD10CA_categorisation")
-    codes_df <- get("ICD10CA_categorisation", envir = asNamespace("LabTNSCPSSPackage"))
+    codes_df <- get("ICD10CA_categorisation")
     names(codes_df)[names(codes_df) == "ICD10CAcodes"] <- "ICD"
 
   } else if (coding_system == "ICD-10-CM") {
     data("ICD10CM_categorisation")
     #codes_df <- get("ICD10CM_categorisation")
-    codes_df <- get("ICD10CM_categorisation", envir = asNamespace("LabTNSCPSSPackage"))
+    codes_df <- get("ICD10CM_categorisation")
     names(codes_df)[names(codes_df) == "CIM10CMcodes"] <- "ICD"
 
   } else if (coding_system == "ICD-11") {
     data("ICD11_categorisation")
     #codes_df <- get("ICD11_categorisation")
-    codes_df <- get("ICD11_categorisation", envir = asNamespace("LabTNSCPSSPackage"))
+    codes_df <- get("ICD11_categorisation")
     names(codes_df)[names(codes_df) == "ICD11codes"] <- "ICD"
   }
 

@@ -134,12 +134,7 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
 
   # Assign labels using a loop
-  #column_names <- colnames(final_data_charlson)  # Get column names
 
-  # Loop through columns and assign labels
- # for (i in 1:length(column_names)) {
-  #  attr(final_data_charlson[[column_names[i]]], "label") <- chalson_labels[i]
-  #}chalrson_popICD10CA
   final_data_charlson <- chalrson_popICD10CA %>%
     mutate(
       # treat NA as 0 for the logic
@@ -255,24 +250,6 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
   fr_grouped_como <- fr_grouped_como %>%
     mutate(across(c(patient_id, episode_id, start_date), as.character))
-
-  # create risk_groups and risk_measure for frailty score
-  #scores_final <- scores_final %>%
-  #  mutate(
-  #    frailty_risk_group = case_when(
-  #      frailty_score %in% c(0, 1) ~ 1,
-  #      frailty_score %in% c(2, 3) ~ 2,
-  #      frailty_score %in% c(4, 5) ~ 3,
-  #      frailty_score %in% c(6, 7) ~ 4,
-  #      frailty_score %in% c(8, 9) ~ 5,
-  #      frailty_score %in% c(10, 12) ~ 6,
-  #      frailty_score %in% c(13, 15) ~ 7,
-  #      frailty_score >= 16 ~ 8,
-  #      TRUE ~ NA_real_
-#      ),
- #     frailty_risk_measure = if_else(frailty_score >= 6, 1, 0)
-  #  )
-
 
 
 
