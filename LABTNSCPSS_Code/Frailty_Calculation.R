@@ -86,9 +86,9 @@ Frailty_Calculation <- function(file_path_main){
     fr_grouped_como[, morbi_frailty_score := 0L]
 
     # write CSVs exactly like your code
-    file_path1 <- paste0("LABTNSCPSS_Data/Frailt_categories_", input_basename, ".csv")
+    file_path1 <- paste0("LABTNSCPSS_Data/Frailt_LABTNSCPSS_categories_", input_basename, ".csv")
     fwrite(fr_grouped, file_path1)
-    file_path2 <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_categories_", input_basename, ".csv")
+    file_path2 <- paste0("LABTNSCPSS_Data/Frailty_LABTNSCPSS_comorbidity_categories_", input_basename, ".csv")
     fwrite(fr_grouped_como, file_path2)
 
     return(list(fr_grouped = as_tibble(fr_grouped), fr_grouped_como = as_tibble(fr_grouped_como)))
@@ -175,7 +175,7 @@ Frailty_Calculation <- function(file_path_main){
     )
 
   # write Frailt_categories_...
-  file_path1 <- paste0("LABTNSCPSS_Data/Frailt_categories_", input_basename, ".csv")
+  file_path1 <- paste0("LABTNSCPSS_Data/Frailty_LABTNSCPSS_categories_", input_basename, ".csv")
   fwrite(fr_grouped, file_path1)
 
   # ---------- MORBI-FRAILTY (df_fr_mo) ----------
@@ -257,7 +257,7 @@ Frailty_Calculation <- function(file_path_main){
 
 
   # write Frailty_comorbidity_categories_...
-  file_path2 <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_categories_", input_basename, ".csv")
+  file_path2 <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_LABTNSCPSS_categories_", input_basename, ".csv")
   fwrite(fr_grouped_como, file_path2)
 
   return(list(fr_grouped = fr_grouped, fr_grouped_como = fr_grouped_como))
