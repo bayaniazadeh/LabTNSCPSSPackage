@@ -69,17 +69,17 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
   final_data_elixhauser <- elixhauser_popICD10CA %>%
     mutate(
       # make sure missing are treated as 0 for the logic
-      diabunc  = if_else(coalesce(diabunc,  0L) == 1L & coalesce(diabc, 0L) == 1L, 0L, coalesce(diabunc, 0L)),
-      diabc = coalesce(diabc, 0L)
+      Diab_NC  = if_else(coalesce(Diab_NC,  0L) == 1L & coalesce(Diab_C, 0L) == 1L, 0L, coalesce(Diab_NC, 0L)),
+      Diab_C = coalesce(Diab_C, 0L)
     ) %>%
     mutate(
-      Elix_score = rowSums(across(-id), na.rm = TRUE)
+      Elixhauser_labtns_cpss = rowSums(across(-id), na.rm = TRUE)
     ) %>%
     separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_", remove = TRUE)
 
 
 
-  file_path <- glue("LABTNSCPSS_Data/Comorbidity_{mapping_Elix}_{input_basename}.csv")
+  file_path <- glue("LABTNSCPSS_Data/ECI_Labtns_cpss_{mapping_Elix}_{input_basename}.csv")
 
   file_path
 
@@ -138,14 +138,14 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
   final_data_charlson <- chalrson_popICD10CA %>%
     mutate(
       # treat NA as 0 for the logic
-      diab   = if_else(coalesce(diab,   0L) == 1L & coalesce(diabwc, 0L) == 1L, 0L, coalesce(diab, 0L)),
-      diabwc = coalesce(diabwc, 0L),
-      Charlson_score = rowSums(across(-id), na.rm = TRUE)
+      Diab_NC   = if_else(coalesce(Diab_NC,   0L) == 1L & coalesce(Diab_C, 0L) == 1L, 0L, coalesce(Diab_NC, 0L)),
+      Diab_C = coalesce(Diab_C, 0L),
+      Charlson_labtns_cpss = rowSums(across(-id), na.rm = TRUE)
     ) %>%
     separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
   #df_with_labels <- rbind(chalson_labels, final_data_charlson)
 
-  file_path <- glue("LABTNSCPSS_Data/Comorbidity_{mapping_Ch}_{input_basename}.csv")
+  file_path <- glue("LABTNSCPSS_Data/CCI_Labtns_cpss_{mapping_Ch}_{input_basename}.csv")
   # Write to Excel
   write.csv(final_data_charlson, file = file_path, row.names = FALSE, na = "")
 
@@ -225,12 +225,12 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
       # treat NAs as 0 for the logic
       Diab_C  = coalesce(Diab_C,  0L),
       Diab_NC = if_else(Diab_C == 1L & coalesce(Diab_NC, 0L) == 1L, 0L, coalesce(Diab_NC, 0L)),
-      Combined_score = rowSums(across(-id), na.rm = TRUE)
+      Combined_comorb_labtns_cpss = rowSums(across(-id), na.rm = TRUE)
     ) %>%
     separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
   #df_with_labels <- rbind(combined_labels, final_data_combined) # new
 
-  file_path <- glue("LABTNSCPSS_Data/Comorbidity_{mapping_combined}_{input_basename}.csv")
+  file_path <- glue("LABTNSCPSS_Data/Combined_Comorb_Labtns_cpss_{mapping_combined}_{input_basename}.csv")
   # Write to Excel
   write.csv(final_data_combined, file = file_path, row.names = FALSE, na = "")
 
@@ -255,31 +255,31 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
   # Merge the three data frames on episode_id
   scores_final <- final_data_charlson %>%
-    select(patient_id, episode_id, start_date, Charlson_score) %>%
+    select(patient_id, episode_id, start_date, Charlson_labtns_cpss) %>%
     left_join(
       final_data_elixhauser %>%
-        select(patient_id, episode_id, start_date, Elix_score),
+        select(patient_id, episode_id, start_date, Elixhauser_labtns_cpss),
       by = c("patient_id", "episode_id", "start_date")
     ) %>%
     left_join(
       final_data_combined %>%
-        select(episode_id, Combined_score),
+        select(episode_id, Combined_comorb_labtns_cpss),
       by = "episode_id"
     ) %>%
     left_join(
       fr_grouped %>%
-        select(patient_id, episode_id, start_date, frailty_score),
+        select(patient_id, episode_id, start_date, Frailty_labtns_cpss), ## Change
       by = c("patient_id", "episode_id", "start_date")
     ) %>%
     left_join(
       fr_grouped_como %>%
-        select(patient_id, episode_id, start_date, morbi_frailty_score),
+        select(patient_id, episode_id, start_date, Morbi_frailty_labtns_cpss),
       by = c("patient_id", "episode_id", "start_date")
     )
 
 
 
-  file_path <- glue::glue("LABTNSCPSS_Data/final_scores_comorbidities_{input_basename}.csv")
+  file_path <- glue::glue("LABTNSCPSS_Data/Final_scores_comorbidity_frailty_Labtns_cpss_{input_basename}.csv")
 
   write.csv(scores_final, file = file_path, row.names = FALSE)
 

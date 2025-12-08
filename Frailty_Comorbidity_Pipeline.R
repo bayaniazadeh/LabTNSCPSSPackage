@@ -17,11 +17,6 @@ cleaned_path <- paste0("LABTNSCPSS_Data/input_data_cleaned_", input_basename, ".
 updated_path <- paste0("LABTNSCPSS_Data/updated_episodes_carry_forward_", input_basename, ".csv")
 
 ############## Provide your data column names and coding system ############
-#col_mapping <- list(patient_id = "nam",
-#                    ICD = "cim",
-#                    start_date = "start_date",
-#                    end_date = "end_date",
-#                    episode_id = "episode_id")
 
 col_mapping <- list(patient_id = "trajectoire_id",
                     ICD = "diagnostic_code",
@@ -51,7 +46,4 @@ run_pipeline <- function(input_file) {
 df_result <- run_pipeline(input_file)
 
 list2env(df_result, envir = .GlobalEnv)
-
-#write.xlsx(final_data_charlson, "my_data.xlsx", rowNames = FALSE)
-
 

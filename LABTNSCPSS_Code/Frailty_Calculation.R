@@ -79,16 +79,16 @@ Frailty_Calculation <- function(file_path_main){
     # fabricate zero outputs if no codes at all
     fr_grouped <- df[, .(patient_id, start_date, episode_id)]
     for (cat in unique_categories) fr_grouped[, (cat) := 0L]
-    fr_grouped[, `:=`(frailty_score = 0L, id = paste(patient_id, episode_id, sep = "_"))]
+    fr_grouped[, `:=`(Frailty_labtns_cpss = 0L, id = paste(patient_id, episode_id, sep = "_"))]
 
     fr_grouped_como <- df[, .(patient_id, start_date, episode_id)]
     for (cat in unique_categories_FM) fr_grouped_como[, (cat) := 0L]
-    fr_grouped_como[, morbi_frailty_score := 0L]
+    fr_grouped_como[, Morbi_frailty_labtns_cpss := 0L]
 
     # write CSVs exactly like your code
-    file_path1 <- paste0("LABTNSCPSS_Data/Frailt_LABTNSCPSS_categories_", input_basename, ".csv")
+    file_path1 <- paste0("LABTNSCPSS_Data/Frailty_Labtns_cpss_", input_basename, ".csv")
     fwrite(fr_grouped, file_path1)
-    file_path2 <- paste0("LABTNSCPSS_Data/Frailty_LABTNSCPSS_comorbidity_categories_", input_basename, ".csv")
+    file_path2 <- paste0("LABTNSCPSS_Data/Morbi-frailty_Labtns_cpss_", input_basename, ".csv")
     fwrite(fr_grouped_como, file_path2)
 
     return(list(fr_grouped = as_tibble(fr_grouped), fr_grouped_como = as_tibble(fr_grouped_como)))
@@ -162,20 +162,20 @@ Frailty_Calculation <- function(file_path_main){
   frailty_pop2[, (unique_categories) := lapply(.SD, function(x) as.integer(replace(x, is.na(x), 0L))),
                .SDcols = unique_categories]
 
-  # frailty_score
-  frailty_pop2[, frailty_score := as.integer(rowSums(.SD, na.rm = TRUE)), .SDcols = unique_categories]
+  # Frailty_labtns_cpss
+  frailty_pop2[, Frailty_labtns_cpss := as.integer(rowSums(.SD, na.rm = TRUE)), .SDcols = unique_categories]
 
   # build outputs consistent with your code
   frag_final <- frailty_pop2[, c("patient_id","start_date","episode_id", unique_categories), with = FALSE]
   fr_grouped <- frag_final %>%
     as_tibble() %>%
     dplyr::mutate(
-      frailty_score = rowSums(dplyr::select(., dplyr::all_of(unique_categories)), na.rm = TRUE),
+      Frailty_labtns_cpss = rowSums(dplyr::select(., dplyr::all_of(unique_categories)), na.rm = TRUE),
       id = paste(patient_id, episode_id, sep = "_")
     )
 
   # write Frailt_categories_...
-  file_path1 <- paste0("LABTNSCPSS_Data/Frailty_LABTNSCPSS_categories_", input_basename, ".csv")
+  file_path1 <- paste0("LABTNSCPSS_Data/Frailty_Labtns_cpss_", input_basename, ".csv")
   fwrite(fr_grouped, file_path1)
 
   # ---------- MORBI-FRAILTY (df_fr_mo) ----------
@@ -200,15 +200,15 @@ Frailty_Calculation <- function(file_path_main){
   frailty_pop_CO[, DiabNC    := fifelse(DiabC   == 1L & DiabNC    == 1L, 0L, DiabNC)]
   frailty_pop_CO[, HBPNoComp := fifelse(HBPComp == 1L & HBPNoComp == 1L, 0L, HBPNoComp)]
 
-  # morbi_frailty_score (unchanged)
-  frailty_pop_CO[, morbi_frailty_score := as.integer(rowSums(.SD, na.rm = TRUE)),
+  # Morbi_frailty_labtns_cpss (unchanged)
+  frailty_pop_CO[, Morbi_frailty_labtns_cpss := as.integer(rowSums(.SD, na.rm = TRUE)),
                  .SDcols = unique_categories_FM]
 
   # Build Frag_Co_final as a data.table
   Frag_Co_final <- frailty_pop_CO[, c("patient_id","start_date","episode_id",
                                       unique_categories_FM,
                                       "DiabC","DiabNC","HBPComp","HBPNoComp",
-                                      "morbi_frailty_score"), with = FALSE]
+                                      "Morbi_frailty_labtns_cpss"), with = FALSE]
 
   # --- Collapse duplicate-named columns (data.table-safe) ---
   # --- Collapse duplicate-named columns in Frag_Co_final (index-safe) ---
@@ -252,12 +252,12 @@ Frailty_Calculation <- function(file_path_main){
       patient_id, start_date, episode_id,
       dplyr::all_of(cats_fm_clean),
       tidyselect::any_of(fm_flags),
-      morbi_frailty_score
+      Morbi_frailty_labtns_cpss
     )
 
 
   # write Frailty_comorbidity_categories_...
-  file_path2 <- paste0("LABTNSCPSS_Data/Frailty_comorbidity_LABTNSCPSS_categories_", input_basename, ".csv")
+  file_path2 <- paste0("LABTNSCPSS_Data/Morbi-frailty_Labtns_cpss", input_basename, ".csv")
   fwrite(fr_grouped_como, file_path2)
 
   return(list(fr_grouped = fr_grouped, fr_grouped_como = fr_grouped_como))
