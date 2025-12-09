@@ -284,14 +284,14 @@ chronic_pathologies <- function(file_path_main){
   }
 
 
-
+  ########## New version ##########
   find_basal_codes <- function(code_list, main_dt) {
-    result <- main_dt[Comp_ICD %in% code_list, unique(B_ICD)]
-    if (length(result) == 0) {
-      return(NA)  # Return NA if no matches are found
-    }
-    return(result)
+    tmp <- main_dt[main_dt$Comp_ICD %in% code_list, ]
+    if (nrow(tmp) == 0) return(NA)
+    return(unique(tmp$B_ICD))
   }
+
+
 
   # Convert to data.table
   if (!is.data.table(df_combined)) {
@@ -299,14 +299,46 @@ chronic_pathologies <- function(file_path_main){
   }
 
 
-  # Convert code_list to a proper list column if it's a character vector with comma-separated values
-  df_combined[, cleaned_chronique_code_cat1 := lapply(cleaned_chronique_code_cat1, function(x) if (x == "character(0)") character(0) else unlist(strsplit(x, ",")))]
 
+  clean_code_string <- function(x) {
+    if (is.na(x) || x == "" || x == "None") return(character(0))
+
+    # Remove c( ... ) or nested c("...")
+    x <- gsub("c\\(|\\)", "", x)
+
+    # Remove all escaped or unescaped quotes
+    x <- gsub("\\\\\"", "", x)
+    x <- gsub("\"", "", x)
+
+    # Remove double commas, spaces
+    x <- gsub(",\\s*,", ",", x)
+    x <- gsub("^,|,$", "", x)
+
+    # Split by comma
+    codes <- unlist(strsplit(x, ","))
+
+    # Trim spaces
+    codes <- trimws(codes)
+
+    # Remove empty elements
+    codes <- codes[codes != ""]
+
+    return(codes)
+  }
+
+  df_combined[, cleaned_chronique_code_cat1 :=
+                lapply(chronique_code_cat1, clean_code_string)]
+
+  # Convert code_list to a proper list column if it's a character vector with comma-separated values
+  #df_combined[, cleaned_chronique_code_cat1 := lapply(cleaned_chronique_code_cat1, function(x) if (x == "character(0)") character(0) else unlist(strsplit(x, ",")))]
 
 
   # Find the corresponding basal codes for category 1 icd codes
-  df_combined[, basal_codes := sapply(cleaned_chronique_code_cat1, function(x) paste(find_basal_codes(x, main_dt), collapse = ","))]
-
+  df_combined[, basal_codes :=
+                sapply(cleaned_chronique_code_cat1, function(x)
+                  paste(find_basal_codes(x, main_dt), collapse = ",")
+                )
+  ]
 
   clean_value <- function(x) {
     # Remove leading and trailing "c(" and ")"
