@@ -327,7 +327,7 @@ chronic_pathologies <- function(file_path_main){
   }
 
   df_combined[, cleaned_chronique_code_cat1 :=
-                lapply(chronique_code_cat1, clean_code_string)]
+                lapply(cleaned_chronique_code_cat1, clean_code_string)]
 
   # Convert code_list to a proper list column if it's a character vector with comma-separated values
   #df_combined[, cleaned_chronique_code_cat1 := lapply(cleaned_chronique_code_cat1, function(x) if (x == "character(0)") character(0) else unlist(strsplit(x, ",")))]
@@ -355,10 +355,35 @@ chronic_pathologies <- function(file_path_main){
   }
 
 
+  df_combined$cleaned_chronique_code_cat2 <- ave(
+    df_combined$patient_id,
+    df_combined$patient_id,
+    FUN = function(pid_block) {
+
+      # indices of rows for this patient block, in the current order
+      idx <- which(df_combined$patient_id == pid_block[1])
+
+      sapply(seq_along(idx), function(i) {
+        rows <- idx[1:i]
+
+        # merge cat2 + basal up to this episode
+        merged <- unique(c(
+          unlist(df_combined$cleaned_chronique_code_cat2[rows]),
+          unlist(df_combined$basal_codes[rows])
+        ))
+
+        paste(unique(na.omit(merged)), collapse = ",")
+      })
+    }
+  )
+
+  # keep your cleaning line if you still want it
+  df_combined[, cleaned_chronique_code_cat2 := sapply(cleaned_chronique_code_cat2, clean_and_extract_values)]
+
 
   # Apply the cleaning function to each relevant column
   df_combined[, cleaned_chronique_code_cat1 := sapply(cleaned_chronique_code_cat1, clean_value)]
-  df_combined[, cleaned_chronique_code_cat2 := sapply(cleaned_chronique_code_cat2, clean_value)]
+  #df_combined[, cleaned_chronique_code_cat2 := sapply(cleaned_chronique_code_cat2, clean_value)]
   df_combined[, basal_codes := sapply(basal_codes, clean_value)]
   df_combined[, ICD := sapply(ICD, clean_value)]
 
@@ -404,17 +429,33 @@ chronic_pathologies <- function(file_path_main){
     function(row) clean_and_concatenate(row)
   )]
 
-  df_combined <- df_combined %>%
-    mutate(across(where(is.list), ~ sapply(., function(x) paste(unlist(x), collapse = ","))))
 
+  # Clean updated_icd_codes string column BEFORE write.csv
+  df_combined[, updated_icd_codes := sapply(updated_icd_codes, function(x) {
 
-  df_final <- df_combined %>%
-    mutate(updated_icd_codes = strsplit(updated_icd_codes, ",")) %>% # Split codes into lists
-    unnest(updated_icd_codes) %>% # Unnest to create separate rows
-    mutate(updated_icd_codes = trimws(updated_icd_codes)) %>% # Trim whitespace
-    filter(!is.na(updated_icd_codes) & updated_icd_codes != "NA") %>% # Remove NA and empty strings
-    select(patient_id, start_date, updated_icd_codes) # Select only the desired columns
+    x <- as.character(x)
 
+    # remove common list-print artifacts
+    x <- gsub("character\\(0\\)", "", x)
+    x <- gsub("^c\\(|\\)$", "", x)          # remove outer c( ... )
+    x <- gsub("\\)|\\(", "", x)             # remove parentheses
+    x <- gsub('\\"', "", x)                 # remove escaped quotes
+    x <- gsub('"', "", x)                   # remove quotes
+    x <- gsub("\\s+", " ", x)               # normalize spaces
+
+    # split into codes
+    v <- unlist(strsplit(x, ","))
+    v <- trimws(v)
+
+    # drop junk/empties
+    v <- v[!is.na(v)]
+    v <- v[v != "" & v != "NA" & v != "None"]
+
+    # de-duplicate (keeps first-seen order)
+    v <- unique(v)
+
+    paste(v, collapse = ",")
+  })]
 
   #write.csv(df_combined, file = out_path, row.names = FALSE)
   out_path <- paste0("LABTNSCPSS_Data/updated_episodes_carry_forward_", input_basename, ".csv")
