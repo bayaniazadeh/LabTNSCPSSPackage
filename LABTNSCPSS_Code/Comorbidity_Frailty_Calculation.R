@@ -79,7 +79,7 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
 
 
-  file_path <- glue("LABTNSCPSS_Data/ECI_Labtns_cpss_{mapping_Elix}_{input_basename}.csv")
+  file_path <- glue("LABTNSCPSS_Data/ECI_Labtns_cpss_{coding_system}_{input_basename}.csv")
 
   file_path
 
@@ -145,7 +145,7 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
     separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
   #df_with_labels <- rbind(chalson_labels, final_data_charlson)
 
-  file_path <- glue("LABTNSCPSS_Data/CCI_Labtns_cpss_{mapping_Ch}_{input_basename}.csv")
+  file_path <- glue("LABTNSCPSS_Data/CCI_Labtns_cpss_{coding_system}_{input_basename}.csv")
   # Write to Excel
   write.csv(final_data_charlson, file = file_path, row.names = FALSE, na = "")
 
@@ -230,7 +230,7 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
     separate(id, into = c("patient_id", "episode_id", "start_date"), sep = "_")
   #df_with_labels <- rbind(combined_labels, final_data_combined) # new
 
-  file_path <- glue("LABTNSCPSS_Data/Combined_Comorb_Labtns_cpss_{mapping_combined}_{input_basename}.csv")
+  file_path <- glue("LABTNSCPSS_Data/Combined_Comorb_Labtns_cpss_{coding_system}_{input_basename}.csv")
   # Write to Excel
   write.csv(final_data_combined, file = file_path, row.names = FALSE, na = "")
 
@@ -279,7 +279,7 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
 
 
-  file_path <- glue::glue("LABTNSCPSS_Data/Final_scores_comorbidity_frailty_Labtns_cpss_{input_basename}.csv")
+  file_path <- glue::glue("LABTNSCPSS_Data/Final_scores_comorbidity_frailty_Labtns_cpss_{coding_system}_{input_basename}.csv")
 
   write.csv(scores_final, file = file_path, row.names = FALSE)
 
