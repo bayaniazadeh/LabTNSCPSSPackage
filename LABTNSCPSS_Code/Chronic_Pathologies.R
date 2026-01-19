@@ -329,9 +329,6 @@ chronic_pathologies <- function(file_path_main){
   df_combined[, cleaned_chronique_code_cat1 :=
                 lapply(cleaned_chronique_code_cat1, clean_code_string)]
 
-  # Convert code_list to a proper list column if it's a character vector with comma-separated values
-  #df_combined[, cleaned_chronique_code_cat1 := lapply(cleaned_chronique_code_cat1, function(x) if (x == "character(0)") character(0) else unlist(strsplit(x, ",")))]
-
 
   # Find the corresponding basal codes for category 1 icd codes
   df_combined[, basal_codes :=
@@ -457,7 +454,7 @@ chronic_pathologies <- function(file_path_main){
     paste(v, collapse = ",")
   })]
 
-  #write.csv(df_combined, file = out_path, row.names = FALSE)
+
   out_path <- paste0("LABTNSCPSS_Data/updated_episodes_carry_forward_", input_basename, ".csv")
 
   # Write the file
@@ -465,13 +462,5 @@ chronic_pathologies <- function(file_path_main){
 
   return(df_combined)
 }
-
-
-
-
-
-
-
-
 
 

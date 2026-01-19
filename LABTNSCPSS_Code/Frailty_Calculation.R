@@ -170,8 +170,8 @@ Frailty_Calculation <- function(file_path_main){
   fr_grouped <- frag_final %>%
     as_tibble() %>%
     dplyr::mutate(
-      Frailty_labtns_cpss = rowSums(dplyr::select(., dplyr::all_of(unique_categories)), na.rm = TRUE),
-      id = paste(patient_id, episode_id, sep = "_")
+      Frailty_labtns_cpss = rowSums(dplyr::select(., dplyr::all_of(unique_categories)), na.rm = TRUE)#,
+      #id = paste(patient_id, episode_id, sep = "_")
     )
 
   # write Frailt_categories_...
@@ -210,7 +210,7 @@ Frailty_Calculation <- function(file_path_main){
                                       "DiabC","DiabNC","HBPComp","HBPNoComp",
                                       "Morbi_frailty_labtns_cpss"), with = FALSE]
 
-  # --- Collapse duplicate-named columns (data.table-safe) ---
+
   # --- Collapse duplicate-named columns in Frag_Co_final (index-safe) ---
   nm   <- names(Frag_Co_final)
   dups <- nm[duplicated(nm)]

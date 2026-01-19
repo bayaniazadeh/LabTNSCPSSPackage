@@ -157,16 +157,9 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
   cm_melted <- cm_melted[cm_melted$presence == 1, ]
 
 
-  #final_data_elixTest <- final_data_elixhauser %>%
-  # group_by(patient_id, episode_id) %>%
-  #summarise(elixhauser_icd10ca_labtns_score = mean(elixhauser_icd10ca_labtns_score, na.rm = TRUE)) %>%
-  #ungroup()
-
-
   ## Calculate combined comorbidity scores of Charlson, Elixhauser
 
-  #combined_icd10ca_labtns
-  #mapping_combined = "combined_icd10ca_labtns"#"charlson_icd10ca_labtns"
+
   Combined_popICD10CA <- comorbidity(x = df_comrbidity, id = "id", code = "code", map = mapping_combined, assign0 = FALSE)
 
   # Write the final data
@@ -214,12 +207,7 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
 
 
   # Assign labels using a loop
-  #column_names <- colnames(final_data_combined)  # Get column names
 
-  # Loop through columns and assign labels
-  #for (i in 1:length(column_names)) {
-  #  attr(final_data_combined[[column_names[i]]], "label") <- combined_labels[i]
-  #}
   final_data_combined <- Combined_popICD10CA %>%
     mutate(
       # treat NAs as 0 for the logic
@@ -235,8 +223,6 @@ Comorbidity_Frailty_Calculation <- function(file_path_main, fr_grouped, fr_group
   write.csv(final_data_combined, file = file_path, row.names = FALSE, na = "")
 
 
-
-  ############ New Step
 
   ### Step 8: combine final scores together
   final_data_elixhauser <- final_data_elixhauser %>%
