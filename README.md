@@ -2,6 +2,11 @@
 
 This R package implements a pipeline to process clinical episode data, identify chronic pathologies, and calculate frailty and comorbidity scores based on patient diagnosis codes.
 
+The methodology implemented in this package is described in:
+
+Nikiema, J. N., Bayani, A., & Bally, M. (2026). A semantic-based carry-forward approach: Uncovering chronic disease burden in real-world data analysis. International Journal of Medical Informatics, 106709.
+
+[Read the published article](https://doi.org/10.1016/j.ijmedinf.2026.106709)
 ---
 
 ## Overview
