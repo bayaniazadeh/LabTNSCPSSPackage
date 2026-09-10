@@ -1,6 +1,6 @@
 # LabTNS CPSS Package
 
-This R package implements a pipeline to process clinical episode data, identify chronic pathologies, and calculate frailty and comorbidity scores based on patient diagnosis codes.
+This R package provides a comprehensive pipeline for processing clinical episode data, identifying chronic conditions, propagating them across successive episodes using a semantic-based carry-forward approach, and calculating comorbidity and frailty scores from patient diagnosis codes.
 
 The methodology implemented in this package is described in the following paper:
 
